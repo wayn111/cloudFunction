@@ -14,8 +14,8 @@ getWeatherInfo(null, null);
 function getWeatherInfo($event, $context)
 {
     $config = $GLOBALS['appConfig'];
-    $client = new Client(['base_uri' => 'http://www.nmc.cn']);
-    $response = $client->get('rest/weather?stationid=57590&_=1627110263634');
+    $client = new Client(['timeout' => 5]);
+    $response = $client->get($config['url']);
     $body = $response->getBody();
     $stringBody = (string)$body;
 
@@ -26,7 +26,7 @@ function getWeatherInfo($event, $context)
     $publishTime = json_decode($stringBody, true)['data']['real']['publish_time'];
     // 实时风向
     $wind = json_decode($stringBody, true)['data']['real']['wind'];
-    $text['url'] = 'http://m.nmc.cn/publish/forecast//AHB/xianning.html';
+    $text['url'] = $config['redirect_url'];
     $info = $weather['info'];
     $text['title'] = <<<EOF
 咸宁未来两小时天气：{$info}
