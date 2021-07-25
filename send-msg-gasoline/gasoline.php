@@ -33,7 +33,7 @@ function getGasolineInfo($event, $context)
     $text['title'] = <<<EOF
 咸宁今日油价 单位:元/升
 92#汽油：{$_92} | 95#汽油：{$_95}
-EOF;;
+EOF;
     $text['description'] = '';
 
     foreach ($qiyouArr as $key => $item) {
