@@ -27,8 +27,9 @@ function getWeatherInfo($event, $context)
     // 实时风向
     $wind = json_decode($stringBody, true)['data']['real']['wind'];
     $text['url'] = 'http://m.nmc.cn/publish/forecast//AHB/xianning.html';
+    $info = $weather['info'];
     $text['title'] = <<<EOF
-咸宁未来两小时天气：{$weather['info']}
+咸宁未来两小时天气：{$info}
 温度：{$weather['temperature']} | 空气质量: {$air['text']}
 EOF;
     $text['description'] = <<<EOF
