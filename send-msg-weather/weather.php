@@ -9,6 +9,28 @@ require 'myclass/WecomSendClass.php';
 // 天气推送，从中央气象局调用接口推送天气消息
 $appConfig = include 'app.conf.php';
 
+// 时间比较函数
+function timeCompare()
+{
+    // 发送时间数组，包含早、中、晚三个时间段，在三个时间段中如果预报开始时间有雨则进行消息推送
+    $sendTimeArr = [
+        // 420预报开始时间7点，480预报结束时间8点
+        [420, 480],
+        [605, 620],
+        [1020, 1080],
+    ];
+
+    // 获取当前小时
+    $nowTime = date('H');
+    $nowMinute = $nowTime * 60;
+    foreach ($sendTimeArr as $sendTime) {
+        if ($nowMinute >= $sendTime[0] && $nowMinute <= $sendTime[1]) {
+            return true;
+        }
+    }
+    return false;
+}
+
 getWeatherInfo(null, null);
 
 function getWeatherInfo($event, $context)
