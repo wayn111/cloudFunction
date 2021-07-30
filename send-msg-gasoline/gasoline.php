@@ -10,15 +10,16 @@ require 'myclass/WecomSendClass.php';
 $appConfig = include 'app.conf.php';
 $retryCount = 3;
 
+// 部署云函数时注释此行
 getGasolineInfo(null, null);
 
 function getGasolineInfo($event, $context)
 {
-    $config = $GLOBALS['appConfig'];
     if ($GLOBALS['retryCount'] <= 0) {
         die('重试次数已用完');
     }
     try {
+        $config = $GLOBALS['appConfig'];
         $ql = QueryList::get('http://www.qiyoujiage.com/hubei/xianning.shtml')
             ->find('#youjiaCont');
         $html = $ql->html();
@@ -28,10 +29,10 @@ function getGasolineInfo($event, $context)
         $qiyou = $html->find('#youjia dt')->text();
         $price = $html->find('#youjia dd')->text();
         // 获取提示信息
-        $tip = $ql->find('div:nth-child(2)')->text();
-        $tipArr = explode("\r\n", $tip);
+        $tip = $ql->find('div:nth-child(2)')->html();
+        $tipArr = explode("<br>", $tip);
         $dateTip = $tipArr[0];
-        $priceTip = $tipArr[1];
+        $priceTip = QueryList::html($tipArr[1])->find('span:nth-child(1)')->text();
         $tip = sprintf('%s,%s', $dateTip, $priceTip);
         $qiyouArr = explode("\n", $qiyou);
         $priceArr = explode("\n", $price);
