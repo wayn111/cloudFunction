@@ -31,6 +31,7 @@ function timeCompare()
     return false;
 }
 
+// 部署云函数时注释此行
 getWeatherInfo(null, null);
 
 function getWeatherInfo($event, $context)
