@@ -6,6 +6,7 @@ require 'vendor/autoload.php';
 require 'myclass/WecomSendClass.php';
 require 'myclass/RedisUtil.php';
 
+date_default_timezone_set("PRC");
 // 天气推送，从中央气象局调用接口推送天气消息
 $appConfig = include 'app.conf.php';
 $redisConfig = include 'redis.conf.php';
