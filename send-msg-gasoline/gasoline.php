@@ -5,7 +5,8 @@ use QL\QueryList;
 require 'vendor/autoload.php';
 require 'myclass/WecomSendClass.php';
 
-
+// 设置脚本时区
+date_default_timezone_set("PRC");
 // 油价推送
 $appConfig = include 'app.conf.php';
 $retryCount = 3;
