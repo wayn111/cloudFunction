@@ -41,9 +41,9 @@ function getWeatherInfo($event, $context)
     if ($GLOBALS['retryCount'] <= 0) {
         die('重试次数已用完');
     }
+    $redis = RedisUtil::getInstance($GLOBALS['redisConfig']);
     try {
         timeCompare() || die('时间还没到，不予推送！');
-        $redis = RedisUtil::getInstance($GLOBALS['redisConfig']);
         $value = $redis->get('weather_send');
         if ($value) {
             die(sprintf('%s最近3小时内已经推送过消息了！', date('Y m d h:i:s')));
@@ -83,16 +83,19 @@ EOF;
 EOF;
         if (mb_stripos($info, '雨')) {
             $redis->set('weather_send', 1);
+            $redis->expire('weather_send', 60 * 60 * 3);  // 保存3小时
             return WecomSendClass::sendMsg($text, $config['wecom_cid'], $config['wecom_aid'], $config['wecom_secret']);
         }
         if (!in_array($GLOBALS['nowMinute'], $GLOBALS['timeEnd'])) {
             die(sprintf('%s还没到该时段结束时间！', date('Y m d h:i:s')));
         }
         $redis->set('weather_send', 1);
+        $redis->expire('weather_send', 60 * 60 * 3);  // 保存3小时
         return WecomSendClass::sendMsg($text, $config['wecom_cid'], $config['wecom_aid'], $config['wecom_secret']);
     } catch (Exception $exception) {
         echo $exception->getMessage() . PHP_EOL;
         $GLOBALS['retryCount']--;
+        $redis->del('weather_send');
         getWeatherInfo($event, $context);
     }
 }
