@@ -15,9 +15,8 @@ $retryCount = 3;
 
 $timeBegin = [420, 680, 1020];
 $timeEnd = [480, 710, 1080];
-// 获取当前小时
-$nowTime = date('H');
-$nowMinute = $nowTime * 60;
+// 获取当前分钟数
+$nowMinute = date('H') * 60 + date('m');
 
 // 时间比较函数
 function timeCompare()
@@ -87,7 +86,7 @@ EOF;
             return WecomSendClass::sendMsg($text, $config['wecom_cid'], $config['wecom_aid'], $config['wecom_secret']);
         }
         if (!in_array($GLOBALS['nowMinute'], $GLOBALS['timeEnd'])) {
-            die(sprintf('%s还没到该时段结束时间！', date('Y m d h:i:s')));
+            die(sprintf('时间：%s，当前分钟数：%s，还没到该时段结束时间！', date('Y-m-d h:i:s'), $GLOBALS['nowMinute']));
         }
         $redis->set('weather_send', 1);
         $redis->expire('weather_send', 60 * 60 * 3);  // 保存3小时
