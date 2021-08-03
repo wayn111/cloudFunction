@@ -16,7 +16,7 @@ $retryCount = 3;
 $timeBegin = [420, 680, 1020];
 $timeEnd = [480, 710, 1080];
 // 获取当前分钟数
-$nowMinute = date('H') * 60 + date('m');
+$nowMinute = date('H') * 60 + date('i');
 
 // 时间比较函数
 function timeCompare()
