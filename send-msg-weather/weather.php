@@ -43,7 +43,7 @@ function getWeatherInfo($event, $context)
     }
     $redis = RedisUtil::getInstance($GLOBALS['redisConfig']);
     try {
-        timeCompare() || die('时间还没到，不予推送！');
+        timeCompare() || die('当前分钟数：' . $GLOBALS['nowMinute'] . '，时间还没到，不予推送！');
         $value = $redis->get('weather_send');
         if ($value) {
             die(sprintf('%s最近3小时内已经推送过消息了！', date('Y m d h:i:s')));
