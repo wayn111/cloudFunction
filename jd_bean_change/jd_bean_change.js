@@ -313,12 +313,12 @@ if ($.isNode()) {
             })
             await $.wait(10 * 1000);
         }
-        if ($.isNode() && allMessage) {
-            await notify.sendNotify(`${$.name}`, `${allMessage}`, {
-                url: `https://bean.m.jd.com/beanDetail/index.action?resourceValue=bean`
-            })
-            await $.wait(10 * 1000);
-        }
+        // if ($.isNode() && allMessage) {
+        //     await notify.sendNotify(`${$.name}`, `${allMessage}`, {
+        //         url: `https://bean.m.jd.com/beanDetail/index.action?resourceValue=bean`
+        //     })
+        //     await $.wait(10 * 1000);
+        // }
 
         if ($.isNode() && allMessageMonthGp2) {
             await notify.sendNotify(`京东月资产变动#2`, `${allMessageMonthGp2}`, {
@@ -468,9 +468,6 @@ async function showMsg() {
         }
         if (userIndex2 == -1 && userIndex3 == -1 && userIndex4 == -1) {
             allMessageMonth += ReturnMessageMonth + `\n`;
-        }
-        if ($.isNode() && WP_APP_TOKEN_ONE) {
-            await notify.sendNotifybyWxPucher("京东月资产变动", `${ReturnMessageMonth}`, `${$.UserName}`);
         }
 
     }
@@ -711,7 +708,7 @@ async function showMsg() {
         ReturnMessage=`【账号名称】${$.nickName || $.UserName}\n`+ReturnMessage;
         ReturnMessage += RemainMessage;
 
-        await notify.sendNotifybyWxPucher(`${$.name}`, `${ReturnMessage}`, `${$.UserName}`);
+        await notify.sendNotify(`${$.name}`, `${ReturnMessage}`, `${$.UserName}`);
     }
 
     //$.msg($.name, '', ReturnMessage , {"open-url": "https://bean.m.jd.com/beanDetail/index.action?resourceValue=bean"});
