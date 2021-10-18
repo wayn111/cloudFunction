@@ -1,9 +1,5 @@
-module.exports = (event, context, callback) => {
-    var cp = require("child_process");
-
-    cp.execFile("node", ["./" + event["Message"] + ".js"], function (err, stdout, stderr) {
-        if (err) {
-            console.error(err);
-        }
-    });
+//'use strict';
+exports.main_handler = async (event, context, callback) => {
+// 云函数执行入口
+    require('./jd_bean_change.js');
 }
