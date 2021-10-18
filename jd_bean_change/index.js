@@ -1,4 +1,9 @@
 module.exports = (event, context, callback) => {
-    console.log(event);
-    callback(null, {code: 0});
+    var cp = require("child_process");
+
+    cp.execFile("node", ["./" + event["Message"] + ".js"], function (err, stdout, stderr) {
+        if (err) {
+            console.error(err);
+        }
+    });
 }
