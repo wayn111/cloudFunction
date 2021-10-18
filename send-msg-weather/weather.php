@@ -42,32 +42,34 @@ function getWeatherInfo($event, $context)
     }
     $redis = RedisUtil::getInstance($GLOBALS['redisConfig']);
     try {
-        timeCompare() || die('当前分钟数：' . $GLOBALS['nowMinute'] . '，时间还没到，不予推送！');
+        // timeCompare() || die('当前分钟数：' . $GLOBALS['nowMinute'] . '，时间还没到，不予推送！');
         $value = $redis->get('weather_send');
         if ($value) {
-            die(sprintf('%s最近3小时内已经推送过消息了！', date('Y m d h:i:s')));
+            // die(sprintf('%s最近3小时内已经推送过消息了！', date('Y m d h:i:s')));
         }
-
         $config = $GLOBALS['appConfig'];
         $client = new Client(['timeout' => 5]);
-        $response = $client->get($config['url']);
-        $body = $response->getBody();
-        $stringBody = (string)$body;
+        var_dump($config['url']);
+        foreach ($config['url'] as $url) {
+            var_dump($url);
+            $response = $client->get($url);
+            $body = $response->getBody();
+            $stringBody = (string)$body;
 
-        // 空气质量
-        $air = json_decode($stringBody, true)['data']['air'];
-        // 实时天气
-        $weather = json_decode($stringBody, true)['data']['real']['weather'];
-        $publishTime = json_decode($stringBody, true)['data']['real']['publish_time'];
-        // 实时风向
-        $wind = json_decode($stringBody, true)['data']['real']['wind'];
-        $text['url'] = $config['redirect_url'];
-        $info = $weather['info'];
-        $text['title'] = <<<EOF
+            // 空气质量
+            $air = json_decode($stringBody, true)['data']['air'];
+            // 实时天气
+            $weather = json_decode($stringBody, true)['data']['real']['weather'];
+            $publishTime = json_decode($stringBody, true)['data']['real']['publish_time'];
+            // 实时风向
+            $wind = json_decode($stringBody, true)['data']['real']['wind'];
+            $text['url'] = $config['redirect_url'];
+            $info = $weather['info'];
+            $text['title'] = <<<EOF
 咸宁未来两小时天气：{$info}
 温度：{$weather['temperature']} | 空气质量: {$air['text']}
 EOF;
-        $text['description'] = <<<EOF
+            $text['description'] = <<<EOF
 发布时间：{$publishTime}
 
 天气：{$info}
@@ -80,17 +82,18 @@ EOF;
     风力：{$wind['power']}
     风速：{$wind['speed']}
 EOF;
-        if (mb_stripos($info, '雨')) {
+            if (mb_stripos($info, '雨')) {
+                $redis->set('weather_send', 1);
+                $redis->expire('weather_send', 60 * 60 * 3);  // 保存3小时
+                return WecomSendClass::sendMsg($text, $config['wecom_cid'], $config['wecom_aid'], $config['wecom_secret']);
+            }
+            if (!in_array($GLOBALS['nowMinute'], $GLOBALS['timeEnd'])) {
+                // die(sprintf('时间：%s，当前分钟数：%s，还没到该时段结束时间！', date('Y-m-d h:i:s'), $GLOBALS['nowMinute']));
+            }
             $redis->set('weather_send', 1);
             $redis->expire('weather_send', 60 * 60 * 3);  // 保存3小时
             return WecomSendClass::sendMsg($text, $config['wecom_cid'], $config['wecom_aid'], $config['wecom_secret']);
         }
-        if (!in_array($GLOBALS['nowMinute'], $GLOBALS['timeEnd'])) {
-            die(sprintf('时间：%s，当前分钟数：%s，还没到该时段结束时间！', date('Y-m-d h:i:s'), $GLOBALS['nowMinute']));
-        }
-        $redis->set('weather_send', 1);
-        $redis->expire('weather_send', 60 * 60 * 3);  // 保存3小时
-        return WecomSendClass::sendMsg($text, $config['wecom_cid'], $config['wecom_aid'], $config['wecom_secret']);
     } catch (Exception $exception) {
         echo $exception->getMessage() . PHP_EOL;
         $GLOBALS['retryCount']--;
