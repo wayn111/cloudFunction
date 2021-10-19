@@ -42,19 +42,21 @@ function getWeatherInfo($event, $context)
     }
     $redis = RedisUtil::getInstance($GLOBALS['redisConfig']);
     try {
-        // timeCompare() || die('当前分钟数：' . $GLOBALS['nowMinute'] . '，时间还没到，不予推送！');
+        timeCompare() || die('当前分钟数：' . $GLOBALS['nowMinute'] . '，时间还没到，不予推送！');
         $value = $redis->get('weather_send');
         if ($value) {
-            // die(sprintf('%s最近3小时内已经推送过消息了！', date('Y m d h:i:s')));
+            die(sprintf('%s最近3小时内已经推送过消息了！', date('Y m d h:i:s')));
         }
         $config = $GLOBALS['appConfig'];
         $client = new Client(['timeout' => 5]);
-        var_dump($config['url']);
         foreach ($config['url'] as $url) {
-            var_dump($url);
             $response = $client->get($url);
             $body = $response->getBody();
             $stringBody = (string)$body;
+
+            $area = json_decode($stringBody, true)['data']['real']['station'];
+            $province = $area['province'];
+            $city = $area['city'];
 
             // 空气质量
             $air = json_decode($stringBody, true)['data']['air'];
@@ -66,7 +68,7 @@ function getWeatherInfo($event, $context)
             $text['url'] = $config['redirect_url'];
             $info = $weather['info'];
             $text['title'] = <<<EOF
-咸宁未来两小时天气：{$info}
+{$province } {$city}未来两小时天气：{$info}
 温度：{$weather['temperature']} | 空气质量: {$air['text']}
 EOF;
             $text['description'] = <<<EOF
@@ -92,7 +94,7 @@ EOF;
             }
             $redis->set('weather_send', 1);
             $redis->expire('weather_send', 60 * 60 * 3);  // 保存3小时
-            return WecomSendClass::sendMsg($text, $config['wecom_cid'], $config['wecom_aid'], $config['wecom_secret']);
+            WecomSendClass::sendMsg($text, $config['wecom_cid'], $config['wecom_aid'], $config['wecom_secret']);
         }
     } catch (Exception $exception) {
         echo $exception->getMessage() . PHP_EOL;
