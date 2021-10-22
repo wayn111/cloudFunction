@@ -15,17 +15,15 @@ $retryCount = 3;
 
 $timeBegin = [420, 680, 1020];
 $timeEnd = [480, 710, 1080];
-// 获取当前分钟数
-$nowMinute = date('H') * 60 + date('i');
 
 // 时间比较函数
-function timeCompare()
+function timeCompare($nowMinute)
 {
     // 发送时间数组，包含早、中、晚三个时间段，在三个时间段中如果预报开始时间有雨则进行消息推送
     $sendTimeArr = array_combine($GLOBALS['timeBegin'], $GLOBALS['timeEnd']);
 
     foreach ($sendTimeArr as $beginTime => $endTime) {
-        if ($GLOBALS['nowMinute'] >= $beginTime && $GLOBALS['nowMinute'] <= $endTime) {
+        if ($nowMinute >= $beginTime && $nowMinute <= $endTime) {
             return true;
         }
     }
@@ -42,7 +40,9 @@ function getWeatherInfo($event, $context)
     }
     $redis = RedisUtil::getInstance($GLOBALS['redisConfig']);
     try {
-        timeCompare() || die('当前分钟数：' . $GLOBALS['nowMinute'] . '，时间还没到，不予推送！');
+        // 获取当前分钟数
+        $nowMinute = date('H') * 60 + date('i');
+        timeCompare($nowMinute) || die('当前分钟数：' . $nowMinute . '，时间还没到，不予推送！');
         $config = $GLOBALS['appConfig'];
         $client = new Client(['timeout' => 5]);
         foreach ($config['cityList'] as $city) {
@@ -95,8 +95,8 @@ EOF;
                 $redis->expire($key, 60 * 60 * 3);  // 保存3小时
                 continue;
             }
-            if (!in_array($GLOBALS['nowMinute'], $GLOBALS['timeEnd'])) {
-                print_r(sprintf('时间：%s，当前分钟数：%s，还没到该时段结束时间！', date('Y-m-d h:i:s'), $GLOBALS['nowMinute']));
+            if (!in_array($nowMinute, $GLOBALS['timeEnd'])) {
+                print_r(sprintf('时间：%s，当前分钟数：%s，还没到该时段结束时间！', date('Y-m-d h:i:s'), $nowMinute));
                 continue;
             }
             WecomSendClass::sendMsg($text, $config['wecom_cid'], $config['wecom_aid'], $config['wecom_secret']);
