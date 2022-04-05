@@ -48,7 +48,7 @@ function getWeatherInfo($event, $context)
             $key = 'weather_send' . '_' . $cityName;
             $value = $redis->get($key);
             if ($value) {
-                print_r(sprintf('%s最近3小时内已经推送过消息了！', date('Y m d h:i:s')));
+                print_r(sprintf('%s最近1小时内已经推送过消息了！', date('Y m d h:i:s')));
                 continue;
             }
 
@@ -98,7 +98,7 @@ EOF;
             }
             WecomSendClass::sendMsg($text, $config['wecom_cid'], $config['wecom_aid'], $config['wecom_secret']);
             $redis->set($key, 1);
-            $redis->expire($key, 60 * 60 * 3);  // 保存3小时
+            $redis->expire($key, 60 * 60 * 1);  // 保存3小时
         }
     } catch (GuzzleException $e) {
         die($e->getMessage());
