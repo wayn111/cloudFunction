@@ -37,7 +37,7 @@ class WecomSendClass
             echo $stringBody . PHP_EOL;
             if (json_decode($stringBody, true)['errcode'] != '0') {
                 $errorRetryCount--;
-                self::sendMsg($text, $wecom_cid, $wecom_aid, $wecom_secret, errorRetryCount: $errorRetryCount);
+                self::sendMsg($text, $wecom_cid, $wecom_aid, $wecom_secret, $errorRetryCount);
             }
             return true;
         }
