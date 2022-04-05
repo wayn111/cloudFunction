@@ -1,6 +1,7 @@
 <?php
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 
 require 'vendor/autoload.php';
 require 'myclass/WecomSendClass.php';
@@ -40,38 +41,39 @@ function getWeatherInfo($event, $context)
     timeCompare($nowMinute) || die('当前分钟数：' . $nowMinute . '，时间还没到，不予推送！');
     $config = $GLOBALS['appConfig'];
     $client = new Client(['timeout' => 5]);
-    foreach ($config['cityList'] as $city) {
-        $url = $city['url'];
-        $cityName = $city['name'];
-        $key = 'weather_send' . '_' . $cityName;
-        $value = $redis->get($key);
-        if ($value) {
-            print_r(sprintf('%s最近3小时内已经推送过消息了！', date('Y m d h:i:s')));
-            continue;
-        }
+    try {
+        foreach ($config['cityList'] as $city) {
+            $url = $city['url'];
+            $cityName = $city['name'];
+            $key = 'weather_send' . '_' . $cityName;
+            $value = $redis->get($key);
+            if ($value) {
+                print_r(sprintf('%s最近3小时内已经推送过消息了！', date('Y m d h:i:s')));
+                continue;
+            }
 
-        $response = $client->get($url);
-        $body = $response->getBody();
-        $stringBody = (string)$body;
+            $response = $client->get($url);
+            $body = $response->getBody();
+            $stringBody = (string)$body;
 
-        $area = json_decode($stringBody, true)['data']['real']['station'];
-        $province = $area['province'];
-        $city = $area['city'];
+            $area = json_decode($stringBody, true)['data']['real']['station'];
+            $province = $area['province'];
+            $city = $area['city'];
 
-        // 空气质量
-        $air = json_decode($stringBody, true)['data']['air'];
-        // 实时天气
-        $weather = json_decode($stringBody, true)['data']['real']['weather'];
-        $publishTime = json_decode($stringBody, true)['data']['real']['publish_time'];
-        // 实时风向
-        $wind = json_decode($stringBody, true)['data']['real']['wind'];
-        $text['url'] = $config['redirect_url'];
-        $info = $weather['info'];
-        $text['title'] = <<<EOF
+            // 空气质量
+            $air = json_decode($stringBody, true)['data']['air'];
+            // 实时天气
+            $weather = json_decode($stringBody, true)['data']['real']['weather'];
+            $publishTime = json_decode($stringBody, true)['data']['real']['publish_time'];
+            // 实时风向
+            $wind = json_decode($stringBody, true)['data']['real']['wind'];
+            $text['url'] = $config['redirect_url'];
+            $info = $weather['info'];
+            $text['title'] = <<<EOF
 {$province} {$city}未来两小时天气：{$info}
 温度：{$weather['temperature']} | 空气质量: {$air['text']}
 EOF;
-        $text['description'] = <<<EOF
+            $text['description'] = <<<EOF
 发布时间：{$publishTime}
 
 天气：{$info}
@@ -84,19 +86,22 @@ EOF;
     风力：{$wind['power']}
     风速：{$wind['speed']}
 EOF;
-        if (mb_stripos($info, '雨')) {
+            if (mb_stripos($info, '雨')) {
+                WecomSendClass::sendMsg($text, $config['wecom_cid'], $config['wecom_aid'], $config['wecom_secret']);
+                $redis->set($key, 1);
+                $redis->expire($key, 60 * 60 * 3);  // 保存3小时
+                continue;
+            }
+            if (!in_array($nowMinute, $GLOBALS['timeEnd'])) {
+                print_r(sprintf('时间：%s，当前分钟数：%s，还没到该时段结束时间！', date('Y-m-d h:i:s'), $nowMinute));
+                continue;
+            }
             WecomSendClass::sendMsg($text, $config['wecom_cid'], $config['wecom_aid'], $config['wecom_secret']);
             $redis->set($key, 1);
             $redis->expire($key, 60 * 60 * 3);  // 保存3小时
-            continue;
         }
-        if (!in_array($nowMinute, $GLOBALS['timeEnd'])) {
-            print_r(sprintf('时间：%s，当前分钟数：%s，还没到该时段结束时间！', date('Y-m-d h:i:s'), $nowMinute));
-            continue;
-        }
-        WecomSendClass::sendMsg($text, $config['wecom_cid'], $config['wecom_aid'], $config['wecom_secret']);
-        $redis->set($key, 1);
-        $redis->expire($key, 60 * 60 * 3);  // 保存3小时
+    } catch (GuzzleException $e) {
+        die($e->getMessage());
     }
 
 }
