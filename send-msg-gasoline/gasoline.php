@@ -11,7 +11,7 @@ date_default_timezone_set("PRC");
 $appConfig = include 'app.conf.php';
 
 // 部署云函数时注释此行
-// getGasolineInfo(null, null);
+getGasolineInfo(null, null);
 
 function getGasolineInfo($event, $context)
 {

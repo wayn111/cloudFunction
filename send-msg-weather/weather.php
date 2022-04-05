@@ -21,7 +21,6 @@ function timeCompare($nowMinute): bool
 {
     // 发送时间数组，包含早、中、晚三个时间段，在三个时间段中如果预报开始时间有雨则进行消息推送
     $sendTimeArr = array_combine($GLOBALS['timeBegin'], $GLOBALS['timeEnd']);
-
     foreach ($sendTimeArr as $beginTime => $endTime) {
         if ($nowMinute >= $beginTime && $nowMinute <= $endTime) {
             return true;
@@ -35,24 +34,28 @@ getWeatherInfo(null, null);
 
 function getWeatherInfo($event, $context)
 {
+
     $redis = RedisUtil::getInstance($GLOBALS['redisConfig']);
-    // 获取当前分钟数
-    $nowMinute = date('H') * 60 + date('i');
-    timeCompare($nowMinute) || die('当前分钟数：' . $nowMinute . '，时间还没到，不予推送！');
     $config = $GLOBALS['appConfig'];
-    $client = new Client(['timeout' => 5]);
     try {
-        foreach ($config['cityList'] as $city) {
-            $url = $city['url'];
-            $cityName = $city['name'];
-            $key = 'weather_send' . '_' . $cityName;
+        // 获取当前分钟数
+        $nowMinute = date('H') * 60 + date('i');
+        timeCompare($nowMinute) || die('当前分钟数：' . $nowMinute . '，时间还没到，不予推送！');
+        $str = getenv('spiderUrl') ?: 'http://www.nmc.cn/rest/weather?stationid=57494&_=1627110263634|wuhan,http://www.nmc.cn/rest/weather?stationid=57590&_=1627110263634|xianning';
+        $spiderUrlArr = explode(",", $str);
+        $client = new Client(['timeout' => 5]);
+        foreach ($spiderUrlArr as $item) {
+            $base_url = explode("|", $item)[0];
+            $city_name = explode("|", $item)[1];
+
+            $key = 'weather_send' . '_' . $city_name;
             $value = $redis->get($key);
             if ($value) {
                 print_r(sprintf('%s最近1小时内已经推送过消息了！', date('Y m d h:i:s')));
                 continue;
             }
 
-            $response = $client->get($url);
+            $response = $client->get($base_url);
             $body = $response->getBody();
             $stringBody = (string)$body;
 
@@ -100,7 +103,7 @@ EOF;
             $redis->set($key, 1);
             $redis->expire($key, 60 * 60 * 1);  // 保存3小时
         }
-    } catch (GuzzleException $e) {
+    } catch (Exception $e) {
         die($e->getMessage());
     }
 
